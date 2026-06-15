@@ -164,6 +164,29 @@ export function NewRequestForm({
     answerBotGenerativeExperience &&
     Boolean(answerBotGenerativeExperience.request_id);
 
+    let currentAttachmentsCount = 0;
+    if (attachments_field) {
+      attachments_field.isRequired = false; // Set the attachments field as required
+      attachments_field.description = "Please attach the necessary file here or link in description."; // Set the attachments field description
+    }
+    console.log("Attachments field after modification:", attachments_field); // Log the modified attachments field to verify changes
+    
+    console.log("Current ticketFields:", ticketFields); // Log the initial attachments count
+    const googleDocRegex = /https:\/\/docs\.google\.com\/document\/d\/([^\/]+)\//;
+
+    const hasDocFileInDescription = () => {
+      const descriptionField = ticketFields.find((field) => field.type === "description");
+      if (!descriptionField || typeof descriptionField.value !== "string") {
+        return undefined; // Description field is missing or not a string
+      }
+      console.log("Description field value:", descriptionField.value); // Log the description field value to verify its content
+      const match = (descriptionField.value as string).match(googleDocRegex);
+      console.log("Google Doc regex match result:", match); // Log the regex match result to verify if a Google Doc link is found
+      return match?.[1];
+    }
+
+    const hasFileInDescription = hasDocFileInDescription;
+
   return (
     <>
       {parentId && (
@@ -268,7 +291,13 @@ export function NewRequestForm({
           }
         })}
         {attachments_field && (
-          <Attachments field={attachments_field} baseLocale={baseLocale} />
+          <Attachments 
+            field={attachments_field} 
+            baseLocale={baseLocale} 
+            onAttachmentCountChange={(count) => {
+              currentAttachmentsCount = count;
+            }} 
+            />
         )}
         {inline_attachments_fields.map(({ type, name, value }, index) => (
           <input key={index} type={type} name={name} value={value} />
@@ -276,7 +305,17 @@ export function NewRequestForm({
         <Footer>
           {(ticket_form_field.options.length === 0 ||
             ticket_form_field.value) && (
-            <Button isPrimary type="submit">
+            <Button 
+              isPrimary 
+              type="submit"
+              //disabled={currentAttachmentsCount === 0}
+              onClick = {(e) => {
+                if (currentAttachmentsCount === 0 && hasFileInDescription === undefined) {
+                  e.preventDefault();
+                  alert(t("new-request-form.attachments-required-alert", "Please attach at least one file before submitting the form."));
+                }
+              }}
+            >
               {t("new-request-form.submit", "Submit")}
             </Button>
           )}

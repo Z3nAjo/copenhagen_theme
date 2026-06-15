@@ -24,6 +24,7 @@ interface AttachmentProps {
   field: AttachmentField;
   baseLocale: string;
   onUploadingChange?: (isUploading: boolean) => void;
+  onAttachmentCountChange?: (count: number) => void; // We need to know how files are currently attached 
 }
 
 async function fetchCsrfToken() {
@@ -48,6 +49,7 @@ export function Attachments({
   field,
   baseLocale,
   onUploadingChange,
+  onAttachmentCountChange = (count: number) => {},
 }: AttachmentProps): JSX.Element {
   const { label, error, name, attachments } = field;
   const {
@@ -66,6 +68,7 @@ export function Attachments({
   const { t } = useTranslation();
 
   const isUploading = files.some((file) => file.status === "pending");
+  onAttachmentCountChange(files.length); //Here we return the update count of files following the useAttachedFiles(...) function
 
   useEffect(() => {
     onUploadingChange?.(isUploading);
